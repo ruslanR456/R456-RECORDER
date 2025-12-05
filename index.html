@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang ="en">
+<link rel="stylesheet" href="styless.css">
+<body>
+<title>R456 RECORDER</title>
+<H1>FREE AND SIMPLE RECORDER </H1>
+
+FOR PC AND PHONE
+
+ 
+relode the page in case to resste the recording and remove it
+....................................................................................
+....................................................................................
+....................................................................................
+....................................................................................
+MADE BY R456
+....................................................................................
+....................................................................................
+....................................................................................
+....................................................................................
+
+
+
+
+PRESS HERE (---->)
+<button id="recordButton">Start Recording</button>
+<p id="statusMessage"></p>
+<video id="preview" style="display:none; border: 1px solid black; max-width: 100%; height: auto;" autoplay muted></video>
+
+
+<script>
+const recordButton = document.getElementById('recordButton');
+const statusMessage = document.getElementById('statusMessage');
+const preview = document.getElementById('preview');
+
+let recorder;
+let recordedChunks = [];
+let isRecording = false;
+
+// Function to get the combined screen and microphone stream
+async function getScreenAndMicStream() {
+  try {
+    // 1. Get the screen and system audio
+    const screenStream = await navigator.mediaDevices.getDisplayMedia({
+      video: { mediaSource: "screen" },
+      audio: true // Request system audio
+    });
+
+    // 2. Get the microphone audio
+    const micStream = await navigator.mediaDevices.getUserMedia({
+      audio: true, // Request microphone audio
+      video: false
+    });
+    //coppy rigte all rights reserved
+    // made by r456 gmale rrussoto6@gmail.com
+    // Create a combined stream for the recorder
+    const combinedStream = new MediaStream([
+      ...screenStream.getVideoTracks(), // Screen video track
+      ...micStream.getAudioTracks()    // Microphone audio track
+      // NOTE: System audio from getDisplayMedia is included in the screenStream
+    ]);
+
+    return combinedStream;
+
+  } catch (error) {
+    statusMessage.textContent = `Error: ${error.name}. Please ensure you grant screen and microphone permissions.`;
+    console.error("Error accessing media devices:", error);
+    return null;
+  }
+}
+
+
+// Function to start the recording process
+async function startRecording() {
+  const stream = await getScreenAndMicStream();
+
+  if (!stream) {
+    return;
+  }
+
+  // Display the screen share preview (optional but helpful)
+  preview.srcObject = stream;
+  preview.style.display = 'block';
+
+  // Initialize the MediaRecorder
+  recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' }); // .webm is a widely supported web format
+  recordedChunks = [];
+
+  // 1. Event when data is available (small chunks)
+  recorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      recordedChunks.push(event.data);
+    }
+  };
+
+  // 2. Event when recording stops
+  recorder.onstop = () => {
+    // Stop all tracks to release the camera/mic
+    stream.getTracks().forEach(track => track.stop());
+    
+    // Create a blob (the final video file) from all the chunks
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+
+    // Create a link to download the video
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'screen-and-voice-recording.webm';
+    a.textContent = 'Download Recording';
+    
+    // Clear the message and display the download link
+    statusMessage.innerHTML = '';
+    statusMessage.appendChild(a);
+
+    // Hide the preview
+    preview.style.display = 'none';
+    preview.srcObject = null;
+  };
+
+  // Start the recorder
+  recorder.start();
+  isRecording = true;
+  recordButton.textContent = 'Stop Recording';
+  recordButton.style.backgroundColor = '#f44336'; // Red for stop
+  statusMessage.textContent = 'Recording started...';
+}
+
+
+// Function to stop the recording process
+function stopRecording() {
+  if (recorder && recorder.state !== 'inactive') {
+    recorder.stop();
+    isRecording = false;
+    recordButton.textContent = 'Start Recording';
+    recordButton.style.backgroundColor = '#4CAF50'; // Green for start
+    statusMessage.textContent = 'Recording stopped. Preparing download...';
+  }
+}
+
+// Event Listener for the button
+recordButton.addEventListener('click', () => {
+  if (isRecording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+});
+
+
+   // 2
+    // Function to stop the recording process
+
+function stopRecording() {
+  if (recorder && recorder.state !== 'inactive') {
+    recorder.stop();
+    isRecording = false;
+    recordButton.textContent = 'Start Recording';
+    recordButton.style.backgroundColor = '#4CAF50'; // Green for start
+    statusMessage.textContent = 'Recording stopped. Loading video...';
+  }
+}
+
+// Function to start the recording process (The startRecording function remains the same)
+// ... (Your startRecording function from before)
+
+// ...
+
+// The core change is HERE, inside recorder.onstop
+recorder.onstop = () => {
+    // Stop all tracks to release the camera/mic
+    stream.getTracks().forEach(track => track.stop());
+    
+    // Create a blob (the final video file) from all the chunks
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+
+    // --- NEW LOGIC START ---
+    
+    // 1. Clear the message
+    statusMessage.textContent = 'Recording ready. Playback below.';
+
+    // 2. Set the video source to the new URL
+    preview.srcObject = null; // Important: Clear the live stream object first
+    preview.src = url;       // Set the recorded video source URL
+    preview.style.display = 'block';
+    preview.controls = true; // Add controls (play/pause, timeline)
+
+    // Optional: Add a download link for convenience
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = 'screen-and-voice-recording.webm';
+    downloadLink.textContent = ' (Download Video)';
+    statusMessage.appendChild(downloadLink);
+
+    // --- NEW LOGIC END ---
+};
+
+// ... (Rest of your script)
+
+
+
+</script>
+</body>
+</html>
